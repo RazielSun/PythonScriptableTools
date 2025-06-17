@@ -1,0 +1,29 @@
+# git-as-svn support gitignore has some limitation
+# Not support masks that contains special patterns  (],[,?,!,**)
+# Not support pathes with / at the end for global ignores (like .vs/) but it works as well with pathes from root (like /Client/.vs/)
+# Pattern /foo/* supported but it has some problem for svn users because the folder foo will be unversioned (better using /foo/ instead)
+
+*.user
+*.pyc
+*.backup
+*.bak
+*.ue4text
+*.COPY
+.gitcentral
+
+.git
+.svn
+.idea
+.vs
+_ReSharper.Caches
+
+Binaries
+Intermediate
+
+# VSCode / XCode / CMake ignores
+*.code-workspace
+.vscode
+CMakeLists.txt
+cmake-build-debug
+cmake-build-release
+*.xcworkspace
