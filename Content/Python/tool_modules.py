@@ -23,7 +23,7 @@ try:
 
     WATCHDOG_AVAILABLE = True
 except ImportError as e:
-    ue.warning(
+    ue.logerror(
         f"[Watchdog] There is no watchdog module in python env. Please install it for hot reload."
     )
 
