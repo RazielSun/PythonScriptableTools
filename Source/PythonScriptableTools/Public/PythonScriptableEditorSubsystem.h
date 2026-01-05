@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "EditorSubsystem.h"
@@ -24,7 +22,7 @@ public:
 	// FTickableGameObject implementation Begin
 	virtual UWorld* GetTickableGameObjectWorld() const override;
 	virtual bool IsTickableInEditor() const { return true; }
-	virtual ETickableTickType GetTickableTickType() const override { return ETickableTickType::Always; }
+	virtual ETickableTickType GetTickableTickType() const override { return ETickableTickType::Conditional; }
 	virtual bool IsTickable() const override;
 	virtual void Tick(float DeltaTime) override;
 	TStatId GetStatId() const override { RETURN_QUICK_DECLARE_CYCLE_STAT(UPythonScriptableEditorSubsystem, STATGROUP_Tickables); }

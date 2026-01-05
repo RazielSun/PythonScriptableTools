@@ -1,6 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "PythonScriptableEditorSubsystem.h"
 
 #include "ScriptableToolsEditorMode.h"
@@ -57,7 +54,7 @@ bool UPythonScriptableEditorSubsystem::ShouldCreateSubsystem(UObject* Outer) con
 		return false;
 	}
 	
-	return Super::ShouldCreateSubsystem(Outer);
+	return true;
 }
 
 UWorld* UPythonScriptableEditorSubsystem::GetTickableGameObjectWorld() const
@@ -67,7 +64,7 @@ UWorld* UPythonScriptableEditorSubsystem::GetTickableGameObjectWorld() const
 
 bool UPythonScriptableEditorSubsystem::IsTickable() const
 {
-	return true;
+	return !((GEditor && GEditor->PlayWorld) || GIsPlayInEditorWorld);
 }
 
 void UPythonScriptableEditorSubsystem::Tick(float DeltaTime)
@@ -146,7 +143,7 @@ void UPythonScriptableEditorSubsystem::PythonHotReload()
 
 	if (IPythonScriptPlugin::Get()->IsPythonAvailable())
 	{
-		IPythonScriptPlugin::Get()->ExecPythonCommand(TEXT("tool_modules.hot_reload()"));
+		IPythonScriptPlugin::Get()->ExecPythonCommand(TEXT("module_virtual_pkg.reload_all_under_virtual_pkg()"));
 	}
 	
 	if (bOpenToolModeIfNeeded)

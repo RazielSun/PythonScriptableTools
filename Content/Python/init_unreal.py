@@ -1,5 +1,10 @@
-import unreal
+import unreal as ue
 
-unreal.log("PythonScriptableTool: init_unreal.py")
+ue.log("PythonScriptableTool: init_unreal.py")
 
-import tool_modules
+import module_paths
+import module_virtual_pkg
+import module_hot_reload
+import module_watchdog
+
+module_virtual_pkg.import_new_modules()
