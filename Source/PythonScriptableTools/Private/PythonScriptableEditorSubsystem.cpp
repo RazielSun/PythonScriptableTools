@@ -3,8 +3,8 @@
 #include "ScriptableToolsEditorMode.h"
 #include "Subsystems/UnrealEditorSubsystem.h"
 #include "EditorModeManager.h"
-#include "IPythonScriptPlugin.h"
 #include "PythonScriptableLog.h"
+#include "PythonScriptablePythonExec.h"
 
 static TAutoConsoleVariable<bool> CVarPythonScriptableHotReloadAutoEnabled(
 	TEXT("pytools.HotReload.AutoEnabled"),
@@ -141,10 +141,9 @@ void UPythonScriptableEditorSubsystem::PythonHotReload()
 {
 	UE_LOG(LogPythonScriptableToolsLog, Log, TEXT("%hs called."), __FUNCTION__);
 
-	if (IPythonScriptPlugin::Get()->IsPythonAvailable())
-	{
-		IPythonScriptPlugin::Get()->ExecPythonCommand(TEXT("module_virtual_pkg.reload_all_under_virtual_pkg()"));
-	}
+	PythonScriptableTools::ExecPythonCommandChecked(
+		TEXT("import module_virtual_pkg; module_virtual_pkg.reload_all_under_virtual_pkg()"),
+		TEXT("Python hot reload"));
 	
 	if (bOpenToolModeIfNeeded)
 	{

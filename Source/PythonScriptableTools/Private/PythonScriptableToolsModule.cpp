@@ -1,8 +1,11 @@
 ﻿#include "CoreMinimal.h"
 #include "ISettingsModule.h"
-#include "PythonScriptableToolsSettings.h"
+#include "IPythonScriptPlugin.h"
 #include "Modules/ModuleManager.h"
-#include "Interfaces/IPluginManager.h"
+#include "PythonScriptableLog.h"
+#include "PythonScriptablePythonExec.h"
+#include "PythonScriptableToolsPluginUtils.h"
+#include "PythonScriptableToolsSettings.h"
 
 class FPythonScriptableToolsModule : public IModuleInterface
 {
@@ -13,6 +16,7 @@ public:
 
 protected:
 	void OnPostEngineInit();
+	void InitializePythonTooling();
 };
 
 #define LOCTEXT_NAMESPACE "FPythonScriptableToolsModule"
@@ -36,6 +40,10 @@ void FPythonScriptableToolsModule::ShutdownModule()
 {
 	if (!IsRunningCommandlet())
 	{
+		PythonScriptableTools::ExecPythonCommandChecked(
+			TEXT("import module_watchdog; module_watchdog.shutdown_file_watcher()"),
+			TEXT("PythonScriptableTools shutdown cleanup"));
+
 		FCoreDelegates::OnPostEngineInit.RemoveAll(this);
 
 		if (ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
@@ -47,7 +55,34 @@ void FPythonScriptableToolsModule::ShutdownModule()
 
 void FPythonScriptableToolsModule::OnPostEngineInit()
 {
-	// @todo: Something on post engine init
+	IPythonScriptPlugin* PythonScriptPlugin = IPythonScriptPlugin::Get();
+	if (!PythonScriptPlugin)
+	{
+		UE_LOG(LogPythonScriptableToolsLog, Error, TEXT("PythonScriptableTools startup skipped: PythonScriptPlugin module is unavailable."));
+		return;
+	}
+
+	if (PythonScriptPlugin->IsPythonInitialized())
+	{
+		InitializePythonTooling();
+		return;
+	}
+
+	PythonScriptPlugin->RegisterOnPythonInitialized(FSimpleDelegate::CreateRaw(this, &FPythonScriptableToolsModule::InitializePythonTooling));
+}
+
+void FPythonScriptableToolsModule::InitializePythonTooling()
+{
+	const FString VirtualPackageName = PythonScriptableTools::PluginUtils::GetVirtualPackageName();
+	FString EscapedVirtualPackageName = VirtualPackageName;
+	EscapedVirtualPackageName.ReplaceInline(TEXT("\\"), TEXT("\\\\"));
+	EscapedVirtualPackageName.ReplaceInline(TEXT("'"), TEXT("\\'"));
+
+	const FString InitCommand = FString::Printf(
+		TEXT("import module_virtual_pkg; module_virtual_pkg.set_virtual_pkg_name('%s'); import init_unreal"),
+		*EscapedVirtualPackageName);
+
+	PythonScriptableTools::ExecPythonCommandChecked(*InitCommand, TEXT("PythonScriptableTools startup initialization"));
 }
 
 #undef LOCTEXT_NAMESPACE

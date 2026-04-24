@@ -1,12 +1,9 @@
-import os
-import time
-import threading
-
 import unreal as ue
 from module_paths import TOOL_PATHS
 from module_hot_reload import set_reload_needed
 
 WATCHDOG_AVAILABLE = False
+WATCHDOG_OBSERVER = None
 try:
     from watchdog.observers import Observer
     from watchdog.events import FileSystemEventHandler
@@ -25,18 +22,36 @@ if WATCHDOG_AVAILABLE:
                 set_reload_needed()
     
     def start_file_watcher():
+        global WATCHDOG_OBSERVER
+
+        if WATCHDOG_OBSERVER is not None:
+            return WATCHDOG_OBSERVER
+
         observer = Observer()
         handler = ToolWatcherHandler()
         for p in TOOL_PATHS:
             observer.schedule(handler, path=str(p), recursive=True)
             ue.log(f"[PythonScriptableTools] Watching: {p}")
+
         observer.start()
-    
-        try:
-            while True:
-                time.sleep(1)
-        except KeyboardInterrupt:
-            observer.stop()
-        observer.join()
-    
-    threading.Thread(target=start_file_watcher, daemon=True).start()
+        WATCHDOG_OBSERVER = observer
+        return WATCHDOG_OBSERVER
+
+    def shutdown_file_watcher():
+        global WATCHDOG_OBSERVER
+
+        if WATCHDOG_OBSERVER is None:
+            return
+
+        ue.log("[PythonScriptableTools] Stopping file watcher")
+        WATCHDOG_OBSERVER.stop()
+        WATCHDOG_OBSERVER.join(timeout=5.0)
+        WATCHDOG_OBSERVER = None
+
+    start_file_watcher()
+else:
+    def start_file_watcher():
+        return None
+
+    def shutdown_file_watcher():
+        return None

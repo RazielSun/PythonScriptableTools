@@ -2,12 +2,44 @@ import sys
 import types
 from pathlib import Path
 import importlib
+import traceback
 from typing import Dict
 
 import unreal as ue
 from module_paths import TOOL_PATHS
 
 VIRTUAL_PKG = "_ue_tools"
+
+
+def _clear_virtual_pkg_modules(previous_name: str):
+    stale_module_names = [
+        name for name in list(sys.modules.keys())
+        if name == previous_name or name.startswith(previous_name + ".")
+    ]
+    for name in stale_module_names:
+        sys.modules.pop(name, None)
+
+
+def set_virtual_pkg_name(name: str):
+    global VIRTUAL_PKG
+
+    sanitized_name = "".join(
+        character if character.isalnum() or character == "_" else "_"
+        for character in (name or "").strip()
+    )
+    if not sanitized_name:
+        sanitized_name = "_ue_tools"
+
+    previous_name = VIRTUAL_PKG
+    if previous_name == sanitized_name:
+        _ensure_virtual_pkg()
+        return
+
+    _clear_virtual_pkg_modules(previous_name)
+    VIRTUAL_PKG = sanitized_name
+    _ensure_virtual_pkg()
+
+
 def _ensure_virtual_pkg():
     if VIRTUAL_PKG not in sys.modules:
         pkg = types.ModuleType(VIRTUAL_PKG)
@@ -33,7 +65,12 @@ def _file_to_modname(path: Path) -> str:
 def _iter_all_py_files():
     for root in TOOL_PATHS:
         yield from root.rglob("*.py")
+
+
 def import_new_modules():
+    imported_count = 0
+    failed_count = 0
+
     for f in _iter_all_py_files():
         if f.name == "__init__.py":
             continue
@@ -43,13 +80,23 @@ def import_new_modules():
         if modname not in sys.modules:
             try:
                 importlib.import_module(modname)
-                # ue.load_module(modname)
                 ue.log(f"[PythonScriptableTools] Imported: {modname}")
-            except Exception as e:
-                ue.log_warning(f"[PythonScriptableTools] Import failed {modname}: {e}")
+                imported_count += 1
+            except Exception:
+                failed_count += 1
+                ue.logerror(f"[PythonScriptableTools] Import failed {modname}")
+                ue.logerror(traceback.format_exc())
+
+    ue.log(
+        f"[PythonScriptableTools] Import scan finished for {VIRTUAL_PKG}: "
+        f"imported={imported_count}, failed={failed_count}"
+    )
 
 def reload_all_under_virtual_pkg():
+    _ensure_virtual_pkg()
     loaded = [n for n in sys.modules.keys() if n == VIRTUAL_PKG or n.startswith(VIRTUAL_PKG + ".")]
+    reloaded_count = 0
+    failed_count = 0
 
     exists_now: Dict[str, Path] = {}
     for f in _iter_all_py_files():
@@ -74,9 +121,16 @@ def reload_all_under_virtual_pkg():
                 ue.log(f"[PythonScriptableTools] Reloaded: {name}")
             else:
                 importlib.import_module(name)
-                # ue.load_module(name)
                 ue.log(f"[PythonScriptableTools] Imported: {name}")
-        except Exception as e:
-            ue.log_warning(f"[PythonScriptableTools] Reload failed {name}: {e}")
+            reloaded_count += 1
+        except Exception:
+            failed_count += 1
+            ue.logerror(f"[PythonScriptableTools] Reload failed {name}")
+            ue.logerror(traceback.format_exc())
+
+    ue.log(
+        f"[PythonScriptableTools] Reload finished for {VIRTUAL_PKG}: "
+        f"discovered={len(exists_now)}, loaded={reloaded_count}, failed={failed_count}"
+    )
 
 _ensure_virtual_pkg()

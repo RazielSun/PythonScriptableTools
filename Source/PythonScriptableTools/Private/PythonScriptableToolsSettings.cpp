@@ -1,7 +1,9 @@
 #include "PythonScriptableToolsSettings.h"
 
+#include "PythonScriptableToolsPluginUtils.h"
+
 UPythonScriptableToolsSettings::UPythonScriptableToolsSettings()
 {
 	HotReloadPaths.Empty();
-	HotReloadPaths.Add(TEXT("/PythonScriptableTools/Python/ScriptableTools"));
+	HotReloadPaths.Add(PythonScriptableTools::PluginUtils::GetDefaultHotReloadPath());
 }

@@ -7,4 +7,5 @@ import module_virtual_pkg
 import module_hot_reload
 import module_watchdog
 
+module_virtual_pkg._ensure_virtual_pkg()
 module_virtual_pkg.import_new_modules()
