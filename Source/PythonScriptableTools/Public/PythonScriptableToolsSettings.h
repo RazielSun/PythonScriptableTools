@@ -11,8 +11,11 @@ class PYTHONSCRIPTABLETOOLS_API UPythonScriptableToolsSettings : public UObject
 
 public:
 	UPythonScriptableToolsSettings();
-	
+
 	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly)
 	TArray<FString> HotReloadPaths;
 
+#if WITH_EDITOR
+	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
 };

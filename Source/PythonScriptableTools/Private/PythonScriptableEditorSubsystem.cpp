@@ -13,15 +13,14 @@ static TAutoConsoleVariable<bool> CVarPythonScriptableHotReloadAutoEnabled(
 	ECVF_Default);
 
 FAutoConsoleCommand FCmdPythonScriptableHotReload
-(
-TEXT("pytools.HotReload.ForceRun"),
-TEXT("Mark for running hot reload for Python Scriptable Tools"),
-	FConsoleCommandDelegate::CreateLambda([]()
-	{
-		GEditor->GetEditorSubsystem<UPythonScriptableEditorSubsystem>()->ForceRunPythonHotReload();
-	}),
-	ECVF_Default
-);
+	(
+		TEXT("pytools.HotReload.ForceRun"),
+		TEXT("Mark for running hot reload for Python Scriptable Tools"),
+		FConsoleCommandDelegate::CreateLambda([]() {
+			GEditor->GetEditorSubsystem<UPythonScriptableEditorSubsystem>()->ForceRunPythonHotReload();
+		}),
+		ECVF_Default
+		);
 
 void UPythonScriptableEditorSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -48,12 +47,12 @@ bool UPythonScriptableEditorSubsystem::ShouldCreateSubsystem(UObject* Outer) con
 #if !WITH_EDITOR
 	return false;
 #endif
-	
+
 	if (!FSlateApplication::IsInitialized())
 	{
 		return false;
 	}
-	
+
 	return true;
 }
 
@@ -85,7 +84,7 @@ void UPythonScriptableEditorSubsystem::Tick(float DeltaTime)
 			bIsAppActiveChangedForHotReload = false;
 		}
 	}
-	
+
 	if (bNeedHotReload)
 	{
 		TryPythonHotReload();
@@ -94,7 +93,19 @@ void UPythonScriptableEditorSubsystem::Tick(float DeltaTime)
 
 	if (bPythonToolHotReload)
 	{
-		PythonHotReload();
+		if (PythonHotReloadDelayTicks > 0)
+		{
+			PythonHotReloadDelayTicks--;
+		}
+		else
+		{
+			PythonHotReload();
+		}
+	}
+	
+	if (bPythonToolAfterHotReload)
+	{
+		PythonAfterHotReload();
 	}
 }
 
@@ -145,19 +156,25 @@ void UPythonScriptableEditorSubsystem::PythonHotReload()
 		TEXT("import module_virtual_pkg; module_virtual_pkg.reload_all_under_virtual_pkg()"),
 		TEXT("Python hot reload"));
 	
+	bPythonToolAfterHotReload = true;
+	bPythonToolHotReload = false;
+}
+
+void UPythonScriptableEditorSubsystem::PythonAfterHotReload()
+{
+	bPythonToolAfterHotReload = false;
+		
 	if (bOpenToolModeIfNeeded)
 	{
 		GLevelEditorModeTools().ActivateMode(UScriptableToolsEditorMode::EM_ScriptableToolsEditorModeId);
 		bOpenToolModeIfNeeded = false;
 	}
-
-	bPythonToolHotReload = false;
 }
 
 void UPythonScriptableEditorSubsystem::TryPythonHotReload()
 {
 	const bool bToolModeIsActive = GLevelEditorModeTools().IsModeActive(UScriptableToolsEditorMode::EM_ScriptableToolsEditorModeId);
-	
+
 	// Activate the default mode in case FEditorModeTools::Tick isn't run before here. 
 	// This can be removed once a general fix for UE-143791 has been implemented.
 	if (bToolModeIsActive)
@@ -167,4 +184,5 @@ void UPythonScriptableEditorSubsystem::TryPythonHotReload()
 	}
 
 	bPythonToolHotReload = true;
+	PythonHotReloadDelayTicks = 2;
 }

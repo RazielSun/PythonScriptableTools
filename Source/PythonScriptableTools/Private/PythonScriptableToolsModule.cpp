@@ -29,10 +29,10 @@ void FPythonScriptableToolsModule::StartupModule()
 
 		ISettingsModule& SettingsModule = FModuleManager::LoadModuleChecked<ISettingsModule>("Settings");
 		SettingsModule.RegisterSettings("Project", "Plugins", "PythonScriptableTools",
-			LOCTEXT("PythonScriptableToolsName", "Python Scriptable Tools"),
-			LOCTEXT("PythonScriptableToolsDescription", "Settings for plugin Python Scriptable Tools."),
-			GetMutableDefault<UPythonScriptableToolsSettings>()
-		);
+		                                LOCTEXT("PythonScriptableToolsName", "Python Scriptable Tools"),
+		                                LOCTEXT("PythonScriptableToolsDescription", "Settings for plugin Python Scriptable Tools."),
+		                                GetMutableDefault<UPythonScriptableToolsSettings>()
+			);
 	}
 }
 
@@ -40,9 +40,15 @@ void FPythonScriptableToolsModule::ShutdownModule()
 {
 	if (!IsRunningCommandlet())
 	{
-		PythonScriptableTools::ExecPythonCommandChecked(
-			TEXT("import module_watchdog; module_watchdog.shutdown_file_watcher()"),
-			TEXT("PythonScriptableTools shutdown cleanup"));
+		if (IPythonScriptPlugin* Python = IPythonScriptPlugin::Get())
+		{
+			if (Python->IsPythonAvailable())
+			{
+				PythonScriptableTools::ExecPythonCommandChecked(
+					TEXT("import module_watchdog; module_watchdog.shutdown_file_watcher()"),
+					TEXT("PythonScriptableTools shutdown cleanup"));
+			}
+		}
 
 		FCoreDelegates::OnPostEngineInit.RemoveAll(this);
 
@@ -86,5 +92,5 @@ void FPythonScriptableToolsModule::InitializePythonTooling()
 }
 
 #undef LOCTEXT_NAMESPACE
-	
+
 IMPLEMENT_MODULE(FPythonScriptableToolsModule, PythonScriptableTools)

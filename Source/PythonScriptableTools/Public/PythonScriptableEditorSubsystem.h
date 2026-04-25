@@ -47,6 +47,7 @@ public:
 protected:
 	void OnApplicationActivationChanged(bool bIsActive);
 	void PythonHotReload();
+	void PythonAfterHotReload();
 	void TryPythonHotReload();
 
 private:
@@ -56,4 +57,7 @@ private:
 	bool bForceRunPythonToolHotReload = false;
 	bool bOpenToolModeIfNeeded = false;
 	bool bPythonToolHotReload = false;
+	bool bPythonToolAfterHotReload = false;
+	
+	int32 PythonHotReloadDelayTicks { 0 };
 };

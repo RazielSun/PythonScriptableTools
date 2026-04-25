@@ -22,8 +22,8 @@ public:
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USceneComponent> DefaultSceneRoot;
-	
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USplineComponent> SplineComponent;
-	
+
 };

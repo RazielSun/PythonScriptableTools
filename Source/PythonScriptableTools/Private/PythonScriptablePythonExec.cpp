@@ -39,15 +39,15 @@ namespace PythonScriptableTools
 		{
 			switch (OutputEntry.Type)
 			{
-			case EPythonLogOutputType::Warning:
-				UE_LOG(LogPythonScriptableToolsLog, Warning, TEXT("%s"), *OutputEntry.Output);
-				break;
-			case EPythonLogOutputType::Error:
-				UE_LOG(LogPythonScriptableToolsLog, Error, TEXT("%s"), *OutputEntry.Output);
-				break;
-			default:
-				UE_LOG(LogPythonScriptableToolsLog, Log, TEXT("%s"), *OutputEntry.Output);
-				break;
+				case EPythonLogOutputType::Warning:
+					UE_LOG(LogPythonScriptableToolsLog, Warning, TEXT("%s"), *OutputEntry.Output);
+					break;
+				case EPythonLogOutputType::Error:
+					UE_LOG(LogPythonScriptableToolsLog, Error, TEXT("%s"), *OutputEntry.Output);
+					break;
+				default:
+					// UE_LOG(LogPythonScriptableToolsLog, Log, TEXT("%s"), *OutputEntry.Output);
+					break;
 			}
 		}
 

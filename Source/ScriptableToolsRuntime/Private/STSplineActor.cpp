@@ -18,4 +18,3 @@ bool ASTSplineActor::IsEditorOnly() const
 {
 	return bEditorOnly;
 }
-

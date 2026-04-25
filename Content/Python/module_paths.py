@@ -38,7 +38,16 @@ def _collect_paths() -> Set[Path]:
             settings_cdo = ue.get_default_object(settings_class)
             for upath in getattr(settings_cdo, "hot_reload_paths", []):
                 if upath:
-                    paths.add(resolve_unreal_path(upath))
+                    resolved_path = resolve_unreal_path(upath)
+                    if resolved_path is None:
+                        continue
+
+                    if resolved_path.exists() and resolved_path.is_dir():
+                        paths.add(resolved_path)
+                    else:
+                        ue.log_warning(
+                            f"[PythonScriptableTools] HotReloadPath not found or not a directory: {upath} -> {resolved_path}"
+                        )
         else:
             ue.log_warning("[PythonScriptableTools] Settings class not found")
     except Exception as e:
@@ -51,6 +60,8 @@ def _collect_paths() -> Set[Path]:
         if fallback.exists():
             paths.add(fallback)
 
-    return {p for p in paths if p.exists() and p.is_dir()}
+    return paths
 
-TOOL_PATHS = _collect_paths()
+
+def get_tool_paths() -> Set[Path]:
+    return _collect_paths()
